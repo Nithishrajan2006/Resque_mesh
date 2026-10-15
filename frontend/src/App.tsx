@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { DemoWorkflowModal } from './components/DemoWorkflowModal';
 import { TwoMinuteDemoModal } from './components/TwoMinuteDemoModal';
 import { AICopilotModal } from './components/AICopilotModal';
+import { ImageLightboxModal } from './components/ImageLightboxModal';
 import { CommandCenter } from './pages/CommandCenter';
 import { Incidents } from './pages/Incidents';
 import { Tasks } from './pages/Tasks';
@@ -23,6 +24,8 @@ export function App() {
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState<boolean>(false);
   const [isTwoMinuteDemoOpen, setIsTwoMinuteDemoOpen] = useState<boolean>(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState<boolean>(false);
+  const [isVisualsOpen, setIsVisualsOpen] = useState<boolean>(false);
+  const [activeVisualId, setActiveVisualId] = useState<string>('problem-solution');
 
   const fetchStats = async () => {
     try {
@@ -64,6 +67,7 @@ export function App() {
           onReset={fetchStats}
           onOpenWorkflowModal={() => setIsTwoMinuteDemoOpen(true)}
           onOpenCopilot={() => setIsCopilotOpen(true)}
+          onOpenVisuals={() => setIsVisualsOpen(true)}
         />
 
         <div className="flex-1 flex min-w-0">
@@ -123,6 +127,14 @@ export function App() {
         <AICopilotModal
           isOpen={isCopilotOpen}
           onClose={() => setIsCopilotOpen(false)}
+        />
+
+        {/* Global AI Visual Intelligence & Blueprint Lightbox */}
+        <ImageLightboxModal
+          isOpen={isVisualsOpen}
+          activeImageId={activeVisualId}
+          onClose={() => setIsVisualsOpen(false)}
+          onSelectImage={(id) => setActiveVisualId(id)}
         />
       </div>
     </Router>

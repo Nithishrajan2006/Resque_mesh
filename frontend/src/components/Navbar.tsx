@@ -18,13 +18,15 @@ interface NavbarProps {
   onReset?: () => void;
   onOpenWorkflowModal?: () => void;
   onOpenCopilot?: () => void;
+  onOpenVisuals?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
   onDemoLoaded, 
   onReset,
   onOpenWorkflowModal,
-  onOpenCopilot
+  onOpenCopilot,
+  onOpenVisuals
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [wsConnected, setWsConnected] = useState<boolean>(false);
@@ -152,6 +154,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
+        {onOpenVisuals && (
+          <button
+            onClick={onOpenVisuals}
+            className="btn-secondary !text-xs !py-1.5 !px-3 hidden md:inline-flex border-cyan-500/40 hover:border-cyan-300 text-cyan-300"
+            title="Inspect AI Visual Feeds & Mission Blueprint"
+          >
+            <span>📷 Visual Intel</span>
+          </button>
+        )}
+
         <button
           onClick={onOpenCopilot}
           className="btn-secondary !text-xs !py-1.5 !px-3 hidden sm:inline-flex border-violet-500/40 hover:border-violet-400 text-violet-300"

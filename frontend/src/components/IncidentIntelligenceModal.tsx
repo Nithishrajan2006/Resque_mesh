@@ -35,6 +35,7 @@ export const IncidentIntelligenceModal: React.FC<IncidentIntelligenceModalProps>
   const [activeTab, setActiveTab] = useState<'overview' | 'satellite' | 'ai-telemetry'>('overview');
   const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
   const [isActing, setIsActing] = useState<boolean>(false);
+  const [visualFeedMode, setVisualFeedMode] = useState<'drone-ai' | 'tactical-radar'>('drone-ai');
 
   if (!incident) return null;
 
@@ -197,69 +198,135 @@ export const IncidentIntelligenceModal: React.FC<IncidentIntelligenceModalProps>
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Top Visual Card: Tactical Imagery / Graphic */}
-              <div className="relative rounded-2xl overflow-hidden border border-white/[0.1] bg-[#050c18] h-48 flex items-center justify-center p-4">
-                {/* Offline-Generated Tactical Radar Graphic */}
-                <svg
-                  className="w-full h-full opacity-80"
-                  viewBox="0 0 600 200"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <radialGradient id="radarPulse" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stopColor={color} stopOpacity="0.4" />
-                      <stop offset="60%" stopColor={color} stopOpacity="0.1" />
-                      <stop offset="100%" stopColor={color} stopOpacity="0" />
-                    </radialGradient>
-                    <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
-                      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-                    </pattern>
-                  </defs>
-
-                  <rect width="600" height="200" fill="#040b17" />
-                  <rect width="600" height="200" fill="url(#gridPattern)" />
-
-                  {/* Elevation contour curves */}
-                  <path d="M 0 160 Q 150 120 300 150 T 600 130" stroke="rgba(34, 211, 238, 0.15)" strokeWidth="1.5" fill="none" />
-                  <path d="M 0 120 Q 200 80 400 110 T 600 90" stroke="rgba(34, 211, 238, 0.1)" strokeWidth="1.5" fill="none" />
-                  <path d="M 0 80 Q 250 40 450 70 T 600 50" stroke="rgba(34, 211, 238, 0.08)" strokeWidth="1.5" fill="none" />
-
-                  {/* Hazard Zone Polygon */}
-                  <polygon
-                    points="260,60 380,40 420,130 280,150"
-                    fill={`${color}15`}
-                    stroke={`${color}50`}
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                  />
-
-                  {/* Radar pulse epicenter */}
-                  <circle cx="330" cy="95" r="70" fill="url(#radarPulse)" />
-                  <circle cx="330" cy="95" r="45" stroke={color} strokeWidth="1" opacity="0.5" />
-                  <circle cx="330" cy="95" r="20" stroke={color} strokeWidth="1.5" opacity="0.8" />
-                  <circle cx="330" cy="95" r="4" fill="#ffffff" />
-
-                  {/* Coordinate text */}
-                  <text x="20" y="30" fill="#94a3b8" fontSize="10" fontFamily="monospace">
-                    TACTICAL TERRAIN RADAR • SECTOR 4-B
-                  </text>
-                  <text x="20" y="45" fill="#64748b" fontSize="9" fontFamily="monospace">
-                    LAT: {incident.latitude?.toFixed(4) || '40.7128'} LON: {incident.longitude?.toFixed(4) || '-74.0060'}
-                  </text>
-                  <text x="500" y="30" fill="#22d3ee" fontSize="10" fontFamily="monospace" textAnchor="end">
-                    STATUS: {incident.status.toUpperCase()}
-                  </text>
-                  <text x="500" y="45" fill="#a855f7" fontSize="9" fontFamily="monospace" textAnchor="end">
-                    AIR RECON: DRONE-01 SYNCED
-                  </text>
-                </svg>
-
-                {/* Overlay Badge */}
-                <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-white/[0.1] text-xs font-mono flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: color }} />
-                  <span className="text-slate-200">Epicenter: {incident.location_label || 'Millbrook Valley'}</span>
+              {/* Top Visual Card: AI Drone Feed vs Tactical Radar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-slate-400 uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-cyan-400" />
+                    Live Aerial & Spatial Reconnaissance Feed
+                  </span>
+                  <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/40 border border-white/[0.08]">
+                    <button
+                      onClick={() => setVisualFeedMode('drone-ai')}
+                      className={`px-2.5 py-0.5 rounded transition ${
+                        visualFeedMode === 'drone-ai'
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      📷 AI Drone Recon
+                    </button>
+                    <button
+                      onClick={() => setVisualFeedMode('tactical-radar')}
+                      className={`px-2.5 py-0.5 rounded transition ${
+                        visualFeedMode === 'tactical-radar'
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      📐 Tactical Radar
+                    </button>
+                  </div>
                 </div>
+
+                {visualFeedMode === 'drone-ai' ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-[#040b17] h-52 group">
+                    <img
+                      src={incident.category === 'flood' ? '/images/drone-recon-hud.jpg' : '/images/rescue-boat-ai.jpg'}
+                      alt="AI Aerial Reconnaissance"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+
+                    {/* Top Badges */}
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/30 text-red-200 border border-red-500/40 text-[10px] font-mono font-bold animate-pulse backdrop-blur-md">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                        AI CASUALTY SCAN: {incident.affected_count || 12} IDENTIFIED
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-cyan-300 border border-cyan-500/30 text-[10px] font-mono">
+                        DRONE-01 HUD
+                      </span>
+                    </div>
+
+                    {/* Bottom Telemetry Strip */}
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 p-2 rounded-xl bg-[#071324]/90 backdrop-blur-md border border-cyan-500/30 flex items-center justify-between text-xs font-mono">
+                      <div className="flex items-center gap-2 text-slate-200 text-[11px]">
+                        <span className="text-amber-300 font-bold">Flood Depth: 1.4m</span>
+                        <span>•</span>
+                        <span className="text-cyan-300">Alt: 31m AGL</span>
+                        <span>•</span>
+                        <span className="text-emerald-300">Route: Clear</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 truncate max-w-[150px]">
+                        {incident.location_label || 'Millbrook Basin'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative rounded-2xl overflow-hidden border border-white/[0.1] bg-[#050c18] h-48 flex items-center justify-center p-4">
+                    {/* Offline-Generated Tactical Radar Graphic */}
+                    <svg
+                      className="w-full h-full opacity-80"
+                      viewBox="0 0 600 200"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <defs>
+                        <radialGradient id="radarPulse" cx="50%" cy="50%" r="50%">
+                          <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+                          <stop offset="60%" stopColor={color} stopOpacity="0.1" />
+                          <stop offset="100%" stopColor={color} stopOpacity="0" />
+                        </radialGradient>
+                        <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+                          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                        </pattern>
+                      </defs>
+
+                      <rect width="600" height="200" fill="#040b17" />
+                      <rect width="600" height="200" fill="url(#gridPattern)" />
+
+                      {/* Elevation contour curves */}
+                      <path d="M 0 160 Q 150 120 300 150 T 600 130" stroke="rgba(34, 211, 238, 0.15)" strokeWidth="1.5" fill="none" />
+                      <path d="M 0 120 Q 200 80 400 110 T 600 90" stroke="rgba(34, 211, 238, 0.1)" strokeWidth="1.5" fill="none" />
+                      <path d="M 0 80 Q 250 40 450 70 T 600 50" stroke="rgba(34, 211, 238, 0.08)" strokeWidth="1.5" fill="none" />
+
+                      {/* Hazard Zone Polygon */}
+                      <polygon
+                        points="260,60 380,40 420,130 280,150"
+                        fill={`${color}15`}
+                        stroke={`${color}50`}
+                        strokeWidth="1.5"
+                        strokeDasharray="4 4"
+                      />
+
+                      {/* Radar pulse epicenter */}
+                      <circle cx="330" cy="95" r="70" fill="url(#radarPulse)" />
+                      <circle cx="330" cy="95" r="45" stroke={color} strokeWidth="1" opacity="0.5" />
+                      <circle cx="330" cy="95" r="20" stroke={color} strokeWidth="1.5" opacity="0.8" />
+                      <circle cx="330" cy="95" r="4" fill="#ffffff" />
+
+                      {/* Coordinate text */}
+                      <text x="20" y="30" fill="#94a3b8" fontSize="10" fontFamily="monospace">
+                        TACTICAL TERRAIN RADAR • SECTOR 4-B
+                      </text>
+                      <text x="20" y="45" fill="#64748b" fontSize="9" fontFamily="monospace">
+                        LAT: {incident.latitude?.toFixed(4) || '40.7128'} LON: {incident.longitude?.toFixed(4) || '-74.0060'}
+                      </text>
+                      <text x="500" y="30" fill="#22d3ee" fontSize="10" fontFamily="monospace" textAnchor="end">
+                        STATUS: {incident.status.toUpperCase()}
+                      </text>
+                      <text x="500" y="45" fill="#a855f7" fontSize="9" fontFamily="monospace" textAnchor="end">
+                        AIR RECON: DRONE-01 SYNCED
+                      </text>
+                    </svg>
+
+                    {/* Overlay Badge */}
+                    <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-white/[0.1] text-xs font-mono flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: color }} />
+                      <span className="text-slate-200">Epicenter: {incident.location_label || 'Millbrook Valley'}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 4 Key Tactical Metric Tiles */}
@@ -402,6 +469,21 @@ export const IncidentIntelligenceModal: React.FC<IncidentIntelligenceModalProps>
 
           {activeTab === 'satellite' && (
             <div className="space-y-4 font-mono text-xs">
+              <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-[#040b17] h-52">
+                <img
+                  src="/images/drone-recon-hud.jpg"
+                  alt="AI Drone Aerial Reconnaissance"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-cyan-500/30 text-[10px] text-cyan-300 font-bold">
+                  SATELLITE & SYNTHESIZED DRONE RADAR HUD
+                </div>
+                <div className="absolute bottom-2.5 left-2.5 right-2.5 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-300">Target: {incident.location_label || 'Millbrook Basin'}</span>
+                  <span className="text-red-400 font-bold">Casualties Detected: {incident.affected_count || 12}</span>
+                </div>
+              </div>
+
               <div className="p-4 rounded-xl bg-black/40 border border-white/[0.08] space-y-2">
                 <div className="text-cyan-400 font-bold uppercase">Synthesized Spatial Telemetry</div>
                 <div className="grid grid-cols-2 gap-2 text-slate-300">
