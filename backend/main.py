@@ -55,6 +55,19 @@ app.include_router(demo.router, prefix="/api/demo", tags=["Demo"])
 app.include_router(ws_router)
 
 
+@app.get("/")
+async def root():
+    return {
+        "service": "ResQMesh Backend API",
+        "status": "online",
+        "docs_url": "/docs",
+        "health_check": "/api/health",
+        "frontend_app": "https://resquemesh-git-main-team-electron.vercel.app",
+        "version": "1.0.0",
+        "mode": "offline-first-mesh"
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {
