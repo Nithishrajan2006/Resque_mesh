@@ -51,6 +51,9 @@ import { ArchitectureFlowBanner } from '../components/ArchitectureFlowBanner';
 import { AIRecommendationsPanel } from '../components/AIRecommendationsPanel';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import { IncidentIntelligenceModal } from '../components/IncidentIntelligenceModal';
+import { ProblemSolutionInfographic } from '../components/ProblemSolutionInfographic';
+import { AIVisualIntelligenceHub } from '../components/AIVisualIntelligenceHub';
+import { ImageLightboxModal } from '../components/ImageLightboxModal';
 
 interface CommandCenterProps {
   onOpenWorkflow: () => void;
@@ -65,6 +68,13 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenWorkflow }) 
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isTechDetailsOpen, setIsTechDetailsOpen] = useState<boolean>(false);
+  const [activeModalImageId, setActiveModalImageId] = useState<string | null>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
+
+  const handleOpenImage = (id: string) => {
+    setActiveModalImageId(id);
+    setIsLightboxOpen(true);
+  };
 
   const fetchData = async () => {
     try {
@@ -158,10 +168,14 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenWorkflow }) 
           const crit = incidents.find((i) => i.severity === 'critical') || incidents[0];
           if (crit) setSelectedIncident(crit);
         }}
+        onInspectImage={handleOpenImage}
       />
 
       {/* 2. Hackathon Value Proposition: Why ResQMesh? (3 Pillars) */}
       <WhyResQMeshBanner />
+
+      {/* 2.1 Mission Problem & Solution Blueprint */}
+      <ProblemSolutionInfographic onInspectImage={handleOpenImage} />
 
       {/* 3. Human-Friendly KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -407,6 +421,9 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenWorkflow }) 
         </div>
       </div>
 
+      {/* 8.5 AI Field Intelligence & Visual Gallery */}
+      <AIVisualIntelligenceHub onInspectImage={handleOpenImage} />
+
       {/* 9. Expandable Technical Architecture & Edge Telemetry Section */}
       <div className="border border-white/[0.08] rounded-2xl bg-[#06101e] overflow-hidden">
         <button
@@ -456,6 +473,14 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenWorkflow }) 
           onUpdated={fetchData}
         />
       )}
+
+      {/* AI Visual Intelligence Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={isLightboxOpen}
+        activeImageId={activeModalImageId}
+        onClose={() => setIsLightboxOpen(false)}
+        onSelectImage={(id) => setActiveModalImageId(id)}
+      />
     </div>
   );
 };

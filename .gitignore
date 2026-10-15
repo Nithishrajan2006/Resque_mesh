@@ -33,9 +33,10 @@ coverage/
 dist/
 *.local
 .vscode/
-.idea/
-.DS_Store
 *.log
+*.jpg
+*.jpeg
+*.png
 
 # Environment
 .env

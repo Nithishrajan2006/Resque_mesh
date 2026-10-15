@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { FloodAerialScene } from './DisasterVisuals';
 import { DashboardStats, Incident } from '../types';
+import { Maximize2, Sparkles, Eye, CheckCircle } from 'lucide-react';
 
 interface DisasterHeroSectionProps {
   stats: DashboardStats | null;
@@ -24,6 +25,7 @@ interface DisasterHeroSectionProps {
   onRunSimulation: () => void;
   onExploreNetwork: () => void;
   onInspectSceneIncident: () => void;
+  onInspectImage?: (id: string) => void;
 }
 
 export const DisasterHeroSection: React.FC<DisasterHeroSectionProps> = ({
@@ -35,7 +37,20 @@ export const DisasterHeroSection: React.FC<DisasterHeroSectionProps> = ({
   onRunSimulation,
   onExploreNetwork,
   onInspectSceneIncident,
+  onInspectImage,
 }) => {
+  const [heroVisualMode, setHeroVisualMode] = React.useState<'ai-drone' | 'vector' | 'blueprint'>('ai-drone');
+
+  const handleInspectCurrent = () => {
+    if (heroVisualMode === 'ai-drone' && onInspectImage) {
+      onInspectImage('drone-recon');
+    } else if (heroVisualMode === 'blueprint' && onInspectImage) {
+      onInspectImage('problem-solution');
+    } else {
+      onInspectSceneIncident();
+    }
+  };
+
   return (
     <div className="rounded-3xl bg-gradient-to-br from-[#071328] via-[#091b36] to-[#050c18] border border-cyan-500/25 p-6 lg:p-8 shadow-2xl space-y-6">
       {/* Top Banner Status Strip */}
@@ -140,12 +155,133 @@ export const DisasterHeroSection: React.FC<DisasterHeroSectionProps> = ({
               <Network className="w-4 h-4 text-cyan-400" />
               <span>Explore the Network</span>
             </button>
+
+            {onInspectImage && (
+              <button
+                onClick={() => onInspectImage('problem-solution')}
+                className="btn-secondary !text-sm !py-3 !px-4 border-violet-500/40 hover:border-violet-400 text-violet-300 flex items-center gap-2"
+                title="View Problem & Solution Infographic"
+              >
+                <Sparkles className="w-4 h-4 text-violet-400" />
+                <span>Mission Blueprint</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right Column (5 cols): Live Drone Recon Scene Card */}
-        <div className="lg:col-span-5">
-          <FloodAerialScene onInspect={onInspectSceneIncident} className="h-64 sm:h-72 w-full" />
+        {/* Right Column (5 cols): Dynamic Visual Feed Switcher */}
+        <div className="lg:col-span-5 space-y-2">
+          {/* Mode Switcher Tabs */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/40 border border-white/[0.08] text-[11px] font-mono">
+              <button
+                onClick={() => setHeroVisualMode('ai-drone')}
+                className={`px-2.5 py-1 rounded transition ${
+                  heroVisualMode === 'ai-drone'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📷 AI Drone Recon
+              </button>
+              <button
+                onClick={() => setHeroVisualMode('vector')}
+                className={`px-2.5 py-1 rounded transition ${
+                  heroVisualMode === 'vector'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📐 Vector HUD
+              </button>
+              <button
+                onClick={() => setHeroVisualMode('blueprint')}
+                className={`px-2.5 py-1 rounded transition ${
+                  heroVisualMode === 'blueprint'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📋 Blueprint
+              </button>
+            </div>
+
+            <button
+              onClick={handleInspectCurrent}
+              className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 transition text-xs flex items-center gap-1 font-mono"
+              title="Inspect Fullscreen"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[10px]">Inspect</span>
+            </button>
+          </div>
+
+          {/* Visual Container */}
+          {heroVisualMode === 'ai-drone' ? (
+            <div
+              onClick={handleInspectCurrent}
+              className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-[#061224] group cursor-pointer shadow-xl h-64 sm:h-72 w-full transition-all duration-300 hover:border-cyan-400 hover:shadow-cyan-500/20"
+            >
+              <img
+                src="/images/drone-recon-hud.jpg"
+                alt="AI Drone Aerial Reconnaissance"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+
+              {/* Top HUD Badges */}
+              <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/30 text-red-200 border border-red-500/40 text-[10px] font-mono font-bold animate-pulse backdrop-blur-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  🔴 THERMAL DETECT: 12 STRANDED
+                </span>
+                <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-cyan-300 border border-cyan-500/30 text-[10px] font-mono">
+                  DRONE-01 RECON
+                </span>
+              </div>
+
+              {/* Bottom HUD Telemetry Strip */}
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 p-2.5 rounded-xl bg-[#071324]/90 backdrop-blur-md border border-cyan-500/30 flex items-center justify-between text-xs font-mono">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 text-slate-200 text-[11px]">
+                    <span className="text-amber-300 font-bold">Depth: 1.4m</span>
+                    <span>•</span>
+                    <span className="text-cyan-300">Alt: 31m</span>
+                    <span>•</span>
+                    <span className="text-emerald-300">Route: Safe</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 truncate">
+                    Millbrook East Basin • P2P Mesh Ping: 8ms
+                  </p>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-cyan-500 text-slate-950 font-bold text-[10px] shadow">
+                  Inspect ➔
+                </span>
+              </div>
+            </div>
+          ) : heroVisualMode === 'blueprint' ? (
+            <div
+              onClick={handleInspectCurrent}
+              className="relative rounded-2xl overflow-hidden border border-emerald-500/30 bg-[#061224] group cursor-pointer shadow-xl h-64 sm:h-72 w-full transition-all duration-300 hover:border-emerald-400 hover:shadow-emerald-500/20"
+            >
+              <img
+                src="/images/resqmesh-problem-solution.jpg"
+                alt="ResQMesh Problem vs Solution"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                <div className="w-full flex items-center justify-between text-xs font-mono">
+                  <span className="text-emerald-300 font-bold text-[11px]">
+                    1. Local ➔ 2. Coordinate ➔ 3. Sync
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold text-[10px]">
+                    Expand ➔
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <FloodAerialScene onInspect={onInspectSceneIncident} className="h-64 sm:h-72 w-full" />
+          )}
         </div>
       </div>
     </div>
