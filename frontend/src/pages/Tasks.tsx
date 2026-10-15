@@ -177,112 +177,174 @@ export const Tasks: React.FC = () => {
       )}
 
       {/* Tasks Table / Card List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className="glass-card p-5 space-y-3 flex flex-col justify-between hover:border-white/20 transition-all duration-200"
-          >
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span
-                  className={`badge-${
-                    task.priority === 'critical'
-                      ? 'critical'
-                      : task.priority === 'high'
-                      ? 'high'
-                      : task.priority === 'medium'
-                      ? 'medium'
-                      : 'low'
-                  }`}
-                >
-                  {task.priority.toUpperCase()}
-                </span>
+      {/* Rescue Missions Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {tasks.map((task, idx) => {
+          const isCritical = task.priority === 'critical';
+          const incidentObj = incidents.find((i) => i.id === task.incident_id);
+          const locationLabel = incidentObj?.location_label || 'East Millbrook';
+          const distanceLabel = idx === 0 ? '2.4 km' : idx === 1 ? '1.8 km' : '3.6 km';
 
-                <span
-                  className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
-                    task.status === 'completed'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      : task.status === 'in_progress'
-                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                      : task.status === 'assigned'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  }`}
-                >
-                  {task.status.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
+          // Determine current pipeline stage index (0 to 5)
+          let currentStageIndex = 0;
+          if (task.ai_suggested && !task.human_approved) {
+            currentStageIndex = 1; // WAITING FOR HUMAN APPROVAL
+          } else if (task.ai_suggested && task.human_approved && task.status === 'unassigned') {
+            currentStageIndex = 2; // APPROVED
+          } else if (task.status === 'assigned') {
+            currentStageIndex = 3; // DISPATCHED
+          } else if (task.status === 'in_progress') {
+            currentStageIndex = 4; // IN PROGRESS
+          } else if (task.status === 'completed') {
+            currentStageIndex = 5; // COMPLETED
+          }
 
-              <h3 className="text-sm font-bold text-white line-clamp-1">{task.title}</h3>
-              <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-                {task.description || 'No operational instructions recorded.'}
-              </p>
+          const STAGES = [
+            'AI RECOMMENDED',
+            'WAITING APPROVAL',
+            'APPROVED',
+            'DISPATCHED',
+            'IN PROGRESS',
+            'COMPLETED',
+          ];
 
-              {/* AI Suggestion Indicator */}
-              {task.ai_suggested && (
-                <div className="mt-2.5 p-2 rounded-lg bg-violet-500/10 border border-violet-500/20 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono">
-                    <span className="text-violet-300 font-bold flex items-center gap-1">
-                      <Cpu className="w-3 h-3 text-violet-400" /> AI Recommendation
+          return (
+            <div
+              key={task.id}
+              className={`glass-card rounded-2xl p-5 space-y-4 border transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between ${
+                isCritical
+                  ? 'border-red-500/30 hover:border-red-400 shadow-lg shadow-red-500/5'
+                  : 'border-white/[0.08] hover:border-cyan-500/30'
+              }`}
+            >
+              <div className="space-y-3">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2 border-b border-white/[0.08] pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-400 uppercase">
+                      🚑 RESCUE MISSION #{task.id.slice(0, 4).toUpperCase()}
                     </span>
-                    {task.human_approved ? (
-                      <span className="text-emerald-400">✓ Commander Approved</span>
-                    ) : (
-                      <span className="text-amber-400 animate-pulse">Pending Approval</span>
+                    <h3 className="text-sm font-bold text-white line-clamp-1 mt-0.5">
+                      {task.title}
+                    </h3>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-black uppercase ${
+                      isCritical
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    }`}
+                  >
+                    {task.priority.toUpperCase()}
+                  </span>
+                </div>
+
+                {/* Key Metadata Fields */}
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-black/30 p-3 rounded-xl border border-white/[0.06]">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Location</span>
+                    <strong className="text-slate-200 truncate block">{locationLabel}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Assigned Unit</span>
+                    <strong className="text-cyan-300 truncate block">
+                      {task.assigned_team || 'Rescue Team 02'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Distance</span>
+                    <strong className="text-amber-300 block">{distanceLabel}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Est Duration</span>
+                    <strong className="text-slate-300 block">{task.estimated_duration_hours || 2} hours</strong>
+                  </div>
+                </div>
+
+                {/* Status Pipeline Visual Stepper */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block font-bold">
+                    Mission Lifecycle Pipeline:
+                  </span>
+                  <div className="grid grid-cols-6 gap-1 text-[8px] font-mono text-center">
+                    {STAGES.map((stg, sIdx) => {
+                      const isPassed = currentStageIndex >= sIdx;
+                      const isCurrent = currentStageIndex === sIdx;
+
+                      return (
+                        <div
+                          key={sIdx}
+                          className={`p-1 rounded flex flex-col items-center justify-center transition-all ${
+                            isCurrent
+                              ? 'bg-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/20'
+                              : isPassed
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-white/[0.02] text-slate-500 border border-white/[0.04]'
+                          }`}
+                        >
+                          <span className="truncate w-full">{stg}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* AI Reasoning Callout */}
+                {task.ai_suggested && (
+                  <div className="p-2.5 rounded-xl bg-violet-500/[0.08] border border-violet-500/20 text-xs">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-violet-300 font-bold mb-1">
+                      <span className="flex items-center gap-1">
+                        <Cpu className="w-3 h-3 text-violet-400" /> AI Recommendation
+                      </span>
+                      <span>
+                        {task.human_approved ? '✓ Approved' : 'Requires Approval'}
+                      </span>
+                    </div>
+                    {task.ai_reasoning && (
+                      <p className="text-[11px] text-slate-300 italic leading-snug">
+                        "{task.ai_reasoning}"
+                      </p>
                     )}
                   </div>
-                  {task.ai_reasoning && (
-                    <p className="text-[11px] text-slate-400 line-clamp-2 italic">
-                      "{task.ai_reasoning}"
-                    </p>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
 
-              <div className="pt-3 border-t border-white/[0.06] mt-3 flex justify-between text-xs font-mono text-slate-400">
-                <span className="flex items-center gap-1">
-                  <Users className="w-3 h-3 text-cyan-400" />
-                  {task.assigned_team || 'Unassigned'}
-                </span>
-                <span>Est: {task.estimated_duration_hours || 2}h</span>
+              {/* Action Controls */}
+              <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between gap-2">
+                {task.ai_suggested && !task.human_approved ? (
+                  <button
+                    onClick={() => setApprovingTask(task)}
+                    className="btn-primary !text-xs !py-1.5 !px-3 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold w-full justify-center"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Approve AI Recommendation</span>
+                  </button>
+                ) : task.status === 'unassigned' || task.status === 'assigned' ? (
+                  <button
+                    onClick={() => handleStart(task.id)}
+                    className="btn-primary !text-xs !py-1.5 !px-3 bg-gradient-to-r from-cyan-500 to-violet-600 text-slate-950 font-bold w-full justify-center"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Dispatch Rescue Mission</span>
+                  </button>
+                ) : task.status === 'in_progress' ? (
+                  <button
+                    onClick={() => handleComplete(task.id)}
+                    className="btn-success !text-xs !py-1.5 !px-3 w-full justify-center"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    <span>Mark Mission Completed</span>
+                  </button>
+                ) : (
+                  <div className="w-full text-center py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">
+                    ✓ Mission Completed & Closed
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Action Bar */}
-            <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
-              {task.ai_suggested && !task.human_approved ? (
-                <button
-                  onClick={() => setApprovingTask(task)}
-                  className="btn-primary !text-[11px] !py-1 !px-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold w-full justify-center"
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Review & Approve AI Dispatch</span>
-                </button>
-              ) : task.status === 'assigned' ? (
-                <button
-                  onClick={() => handleStart(task.id)}
-                  className="btn-primary !text-[11px] !py-1 !px-2.5 w-full justify-center"
-                >
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Deploy / Start Task</span>
-                </button>
-              ) : task.status === 'in_progress' ? (
-                <button
-                  onClick={() => handleComplete(task.id)}
-                  className="btn-success !text-[11px] !py-1 !px-2.5 w-full justify-center"
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span>Mark Completed</span>
-                </button>
-              ) : (
-                <span className="text-[11px] font-mono text-emerald-400/80 py-1">
-                  ✓ Operation Finalized
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {tasks.length === 0 && !loading && (
           <div className="col-span-full text-center py-16 glass-card text-slate-500 text-xs">

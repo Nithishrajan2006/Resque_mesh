@@ -10,7 +10,8 @@ import {
   Clock, 
   Cpu, 
   X,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
 import { 
   listIncidents, 
@@ -19,6 +20,7 @@ import {
   analyzeIncident 
 } from '../lib/api';
 import { Incident, IncidentCategory, IncidentSeverity } from '../types';
+import { IncidentIntelligenceModal } from '../components/IncidentIntelligenceModal';
 
 export const Incidents: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -47,6 +49,7 @@ export const Incidents: React.FC = () => {
   // AI Agent Modal
   const [selectedAnalysis, setSelectedAnalysis] = useState<any | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [selectedDossierIncident, setSelectedDossierIncident] = useState<Incident | null>(null);
 
   const fetchIncidents = async () => {
     try {
@@ -189,84 +192,182 @@ export const Incidents: React.FC = () => {
       </div>
 
       {/* Incidents List Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {incidents.map((inc) => (
-          <div
-            key={inc.id}
-            className="glass-card p-5 space-y-3 relative overflow-hidden flex flex-col justify-between hover:border-white/20 transition-all duration-200"
-          >
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <span
-                  className={`badge-${
-                    inc.severity === 'critical'
-                      ? 'critical'
-                      : inc.severity === 'high'
-                      ? 'high'
-                      : inc.severity === 'medium'
-                      ? 'medium'
-                      : 'low'
-                  }`}
-                >
-                  {inc.severity.toUpperCase()}
-                </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {incidents.map((inc) => {
+          const isCritical = inc.severity === 'critical';
+          const isWarning = inc.severity === 'high' || inc.severity === 'medium';
 
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300">
-                    {inc.category.replace('_', ' ').toUpperCase()}
+          return (
+            <div
+              key={inc.id}
+              onClick={() => setSelectedDossierIncident(inc)}
+              className={`glass-card rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:scale-[1.01] border flex flex-col justify-between ${
+                isCritical
+                  ? 'border-red-500/40 hover:border-red-400 shadow-lg shadow-red-500/5'
+                  : isWarning
+                  ? 'border-amber-500/30 hover:border-amber-400'
+                  : 'border-white/[0.08] hover:border-cyan-500/40'
+              }`}
+            >
+              {/* Top Visual Disaster Graphic Banner */}
+              <div className="h-32 w-full relative overflow-hidden bg-[#071324] border-b border-white/[0.08]">
+                {/* SVG Visual Graphic by category */}
+                <svg viewBox="0 0 320 120" className="w-full h-full object-cover">
+                  <defs>
+                    <linearGradient id={`grad-${inc.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={isCritical ? '#450a0a' : isWarning ? '#451a03' : '#082f49'} />
+                      <stop offset="100%" stopColor="#071324" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="120" fill={`url(#grad-${inc.id})`} />
+                  
+                  {/* Category-specific geometry */}
+                  {inc.category === 'flood' ? (
+                    <g>
+                      <path d="M 0,70 Q 80,45 160,75 T 320,65 L 320,120 L 0,120 Z" fill="#0284c7" fillOpacity="0.4" />
+                      <circle cx="160" cy="70" r="16" fill="#ef4444" fillOpacity="0.2" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3,2" />
+                      <text x="160" y="74" fill="#ffffff" fontSize="12" textAnchor="middle">🚤</text>
+                    </g>
+                  ) : inc.category === 'fire' ? (
+                    <g>
+                      <circle cx="160" cy="60" r="28" fill="#ef4444" fillOpacity="0.3" />
+                      <circle cx="160" cy="60" r="14" fill="#f97316" fillOpacity="0.5" />
+                      <text x="160" y="65" fill="#ffffff" fontSize="14" textAnchor="middle">🔥</text>
+                    </g>
+                  ) : inc.category === 'medical' ? (
+                    <g>
+                      <circle cx="160" cy="60" r="24" fill="#10b981" fillOpacity="0.25" stroke="#10b981" strokeWidth="1" />
+                      <text x="160" y="65" fill="#ffffff" fontSize="14" textAnchor="middle">🚑</text>
+                    </g>
+                  ) : inc.category === 'blocked_road' ? (
+                    <g>
+                      <line x1="80" y1="40" x2="240" y2="90" stroke="#f59e0b" strokeWidth="4" strokeDasharray="8,4" />
+                      <text x="160" y="70" fill="#ffffff" fontSize="14" textAnchor="middle">🚧</text>
+                    </g>
+                  ) : (
+                    <g>
+                      <circle cx="160" cy="60" r="20" fill="#8b5cf6" fillOpacity="0.25" />
+                      <text x="160" y="65" fill="#ffffff" fontSize="14" textAnchor="middle">📍</text>
+                    </g>
+                  )}
+                  {/* Grid lines */}
+                  <line x1="0" y1="30" x2="320" y2="30" stroke="rgba(255,255,255,0.05)" />
+                  <line x1="0" y1="60" x2="320" y2="60" stroke="rgba(255,255,255,0.05)" />
+                  <line x1="0" y1="90" x2="320" y2="90" stroke="rgba(255,255,255,0.05)" />
+                </svg>
+
+                {/* Severity Badge overlay */}
+                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-black uppercase shadow-lg ${
+                      isCritical
+                        ? 'bg-red-600 text-white shadow-red-500/30 animate-pulse'
+                        : isWarning
+                        ? 'bg-amber-500 text-slate-950 font-bold'
+                        : 'bg-emerald-500 text-slate-950 font-bold'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-white" />
+                    {inc.severity.toUpperCase()}
                   </span>
+
+                  <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-mono text-cyan-300 border border-white/10 uppercase">
+                    {inc.category.replace('_', ' ')}
+                  </span>
+                </div>
+
+                {/* AI Priority & Verified overlay */}
+                <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
                   {inc.is_verified ? (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      ✓ VERIFIED
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                      VERIFIED
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      UNVERIFIED
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      UNCONFIRMED
                     </span>
                   )}
                 </div>
-              </div>
 
-              <h3 className="text-sm font-bold text-white line-clamp-1">{inc.title}</h3>
-              <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-                {inc.description || 'No description provided.'}
-              </p>
-
-              <div className="pt-3 border-t border-white/[0.06] mt-3 space-y-1 text-xs text-slate-400 font-mono">
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span className="truncate">{inc.location_label || `${inc.latitude?.toFixed(4)}, ${inc.longitude?.toFixed(4)}`}</span>
-                </div>
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Victims: ~{inc.affected_count}</span>
-                  <span>Origin: {inc.source_device_id}</span>
+                {/* Bottom Graphic HUD */}
+                <div className="absolute bottom-1.5 left-2.5 right-2.5 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <span>AI PRIORITY: {inc.severity === 'critical' ? '0.95 URGENT' : 'EVALUATED'}</span>
+                  <span className="text-cyan-300 group-hover:underline">Click for Dossier ➔</span>
                 </div>
               </div>
-            </div>
 
-            {/* Incident Action Buttons */}
-            <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-2">
-              <button
-                onClick={() => handleAnalyze(inc.id)}
-                className="btn-secondary !text-[11px] !py-1 !px-2.5 text-cyan-300 border-cyan-500/30 hover:border-cyan-400"
-              >
-                <Cpu className="w-3 h-3 text-cyan-400" />
-                <span>AI Agent Review</span>
-              </button>
+              {/* Card Body Content */}
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white group-hover:text-cyan-300 transition line-clamp-1">
+                    {inc.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+                    {inc.description || 'No description provided.'}
+                  </p>
+                </div>
 
-              {!inc.is_verified && (
+                {/* Key Metadata Fields */}
+                <div className="space-y-1.5 pt-2 border-t border-white/[0.06] text-xs font-mono text-slate-300">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span className="truncate text-slate-200">
+                      {inc.location_label || `${inc.latitude?.toFixed(4)}, ${inc.longitude?.toFixed(4)}`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500">People:</span>
+                      <strong className="text-amber-400">~{inc.affected_count || 12}</strong>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500">Time:</span>
+                      <span className="text-slate-300">
+                        {new Date(inc.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500">Device:</span>
+                      <span className="text-cyan-300">{inc.source_device_id}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500">Reporter:</span>
+                      <span className="text-slate-300 truncate">{inc.reported_by || 'Field Unit'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Action Footer */}
+              <div className="p-3 border-t border-white/[0.06] bg-black/20 flex items-center justify-between">
                 <button
-                  onClick={() => handleVerify(inc.id)}
-                  className="btn-success !text-[11px] !py-1 !px-2.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDossierIncident(inc);
+                  }}
+                  className="btn-secondary !text-[11px] !py-1 !px-2.5 text-cyan-300 border-cyan-500/30 hover:border-cyan-400"
                 >
-                  <CheckCircle className="w-3 h-3" />
-                  <span>Verify</span>
+                  <Eye className="w-3 h-3 text-cyan-400" />
+                  <span>Inspect Intelligence</span>
                 </button>
-              )}
-            </div>
-          </div>
-        ))}
 
+                {!inc.is_verified && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleVerify(inc.id);
+                    }}
+                    className="btn-success !text-[11px] !py-1 !px-2.5"
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Confirm</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
         {incidents.length === 0 && !loading && (
           <div className="col-span-full text-center py-16 glass-card text-slate-500 text-xs">
             No incidents matched your query.
@@ -490,6 +591,15 @@ export const Incidents: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Incident Intelligence Modal */}
+      {selectedDossierIncident && (
+        <IncidentIntelligenceModal
+          incident={selectedDossierIncident}
+          onClose={() => setSelectedDossierIncident(null)}
+          onUpdated={fetchIncidents}
+        />
       )}
     </div>
   );

@@ -87,12 +87,50 @@ DEMO_INCIDENTS = [
 ]
 
 DEMO_PEERS = [
-    {"device_id": "rescue-alpha", "name": "Rescue Alpha", "status": "online", "is_simulated": True,
-     "description": "Field rescue team — north sector", "messages_sent": 12, "messages_received": 8},
-    {"device_id": "rescue-bravo", "name": "Rescue Bravo", "status": "online", "is_simulated": True,
-     "description": "Field rescue team — south sector", "messages_sent": 7, "messages_received": 5},
-    {"device_id": "supply-unit", "name": "Supply Unit", "status": "online", "is_simulated": True,
-     "description": "Supply logistics and depot management", "messages_sent": 4, "messages_received": 9},
+    {
+        "device_id": "RESCUE-A",
+        "name": "Rescue Alpha (Search & Rescue)",
+        "status": "online",
+        "is_simulated": True,
+        "description": "Tactical water rescue & extraction unit — North Sector",
+        "messages_sent": 28,
+        "messages_received": 19,
+        "battery_level": 94,
+        "sync_status": "synced"
+    },
+    {
+        "device_id": "RESCUE-B",
+        "name": "Rescue Bravo (Mobile Paramedics)",
+        "status": "online",
+        "is_simulated": True,
+        "description": "Paramedic triage & ambulance unit — South Sector",
+        "messages_sent": 16,
+        "messages_received": 14,
+        "battery_level": 82,
+        "sync_status": "synced"
+    },
+    {
+        "device_id": "DRONE-01",
+        "name": "Drone Recon-01 (Aerial Mesh)",
+        "status": "online",
+        "is_simulated": True,
+        "description": "Autonomous aerial mesh relay & thermal sensor drone",
+        "messages_sent": 42,
+        "messages_received": 8,
+        "battery_level": 68,
+        "sync_status": "synced"
+    },
+    {
+        "device_id": "SUPPLY-C",
+        "name": "Supply Depot Charlie",
+        "status": "online",
+        "is_simulated": True,
+        "description": "Regional emergency supply staging depot & dispensary",
+        "messages_sent": 11,
+        "messages_received": 31,
+        "battery_level": 99,
+        "sync_status": "synced"
+    },
 ]
 
 DEMO_MAP_FEATURES = [
@@ -104,6 +142,7 @@ DEMO_MAP_FEATURES = [
     {"feature_type": "blocked_road", "name": "Bridge Street Closure", "description": "Structural damage — closed", "latitude": BASE_LAT + 0.003, "longitude": BASE_LON + 0.022, "severity": "critical", "status": "active"},
     {"feature_type": "team", "name": "Rescue Alpha Position", "description": "Currently at north flood zone", "latitude": BASE_LAT + 0.009, "longitude": BASE_LON - 0.005, "status": "active"},
     {"feature_type": "team", "name": "Rescue Bravo Position", "description": "Staged at community center", "latitude": BASE_LAT + 0.016, "longitude": BASE_LON + 0.011, "status": "active"},
+    {"feature_type": "drone", "name": "Drone Recon-01 Aerial Position", "description": "High-altitude relay & thermal reconnaissance over sector", "latitude": BASE_LAT + 0.011, "longitude": BASE_LON + 0.002, "status": "active"},
 ]
 
 DEMO_SUPPLIES = [
@@ -166,6 +205,8 @@ async def load_demo(db: Session = Depends(get_db)):
             description=p_data["description"],
             messages_sent=p_data.get("messages_sent", 0),
             messages_received=p_data.get("messages_received", 0),
+            battery_level=p_data.get("battery_level", 85),
+            sync_status=p_data.get("sync_status", "synced"),
             last_seen=now(), last_sync=hours_ago(0.5),
             created_at=hours_ago(2),
         )
@@ -540,16 +581,18 @@ async def simulate_step(step_number: int, db: Session = Depends(get_db)):
         return {"step": 5, "status": "ok", "allocations": applied, "message": "Supply agent allocation applied with human approval"}
 
     elif step_number == 6:
-        peer = db.execute(select(Peer).where(Peer.device_id == "rescue-bravo")).scalars().first()
+        peer = db.execute(select(Peer).where(Peer.device_id.in_(["RESCUE-B", "rescue-bravo"]))).scalars().first()
+        target_device = peer.device_id if peer else "RESCUE-B"
         if peer:
             peer.status = "offline"
+            peer.sync_status = "pending"
             db.commit()
 
         payload = json.dumps({"type": "incident_alert", "incident_id": _demo_state.get("demo_incident_id"), "priority": "critical"})
         msg = SyncMessage(
             id=uid(), message_id=msg_id(),
-            source_device_id="rescue-alpha",
-            destination_device_id="rescue-bravo",
+            source_device_id="RESCUE-A",
+            destination_device_id=target_device,
             payload_type="incident_alert", payload=payload,
             priority=1, status="queued",
             created_at=now(), schema_version="1.0",
@@ -559,36 +602,38 @@ async def simulate_step(step_number: int, db: Session = Depends(get_db)):
         if peer:
             peer.pending_messages += 1
         db.commit()
-        await websocket_manager.broadcast_event("demo_step", {"step": 6, "message": "Rescue Bravo disconnected — message queued", "peer_status": "offline"})
-        return {"step": 6, "status": "ok", "message": "Rescue Bravo disconnected. Critical alert queued for delivery.", "message_id": msg.message_id}
+        await websocket_manager.broadcast_event("demo_step", {"step": 6, "message": f"{target_device} disconnected — message queued", "peer_status": "offline"})
+        return {"step": 6, "status": "ok", "message": f"{target_device} disconnected. Critical alert queued for delivery.", "message_id": msg.message_id}
 
     elif step_number == 7:
         queued_msgs = db.execute(select(SyncMessage).where(
-            SyncMessage.destination_device_id == "rescue-bravo",
+            SyncMessage.destination_device_id.in_(["RESCUE-B", "rescue-bravo"]),
             SyncMessage.status == "queued"
         )).scalars().all()
         forwarded = []
         for msg in queued_msgs:
             msg.hop_count += 1
-            msg.via_device_ids = "rescue-alpha"
+            msg.via_device_ids = "RESCUE-A"
             forwarded.append(msg.message_id)
         db.commit()
         db.add(AuditLog(id=uid(), action="MESSAGE_HOP_FORWARDED", entity_type="sync_message",
-                        entity_id=None, performed_by="sync_engine", device_id="rescue-alpha",
-                        details=f"{len(forwarded)} messages forwarded via Rescue Alpha (multi-hop)", created_at=now()))
+                        entity_id=None, performed_by="sync_engine", device_id="RESCUE-A",
+                        details=f"{len(forwarded)} messages forwarded via RESCUE-A (multi-hop)", created_at=now()))
         db.commit()
-        await websocket_manager.broadcast_event("demo_step", {"step": 7, "forwarded": len(forwarded), "via": "rescue-alpha"})
-        return {"step": 7, "status": "ok", "forwarded": len(forwarded), "message": "Messages forwarded via Rescue Alpha (hop count incremented)"}
+        await websocket_manager.broadcast_event("demo_step", {"step": 7, "forwarded": len(forwarded), "via": "RESCUE-A"})
+        return {"step": 7, "status": "ok", "forwarded": len(forwarded), "message": "Messages forwarded via RESCUE-A (hop count incremented)"}
 
     elif step_number == 8:
-        peer = db.execute(select(Peer).where(Peer.device_id == "rescue-bravo")).scalars().first()
+        peer = db.execute(select(Peer).where(Peer.device_id.in_(["RESCUE-B", "rescue-bravo"]))).scalars().first()
+        target_device = peer.device_id if peer else "RESCUE-B"
         if peer:
             peer.status = "online"
+            peer.sync_status = "synced"
             peer.last_seen = now()
             peer.last_sync = now()
 
         msgs = db.execute(select(SyncMessage).where(
-            SyncMessage.destination_device_id == "rescue-bravo",
+            SyncMessage.destination_device_id.in_(["RESCUE-B", "rescue-bravo"]),
             SyncMessage.status == "queued"
         )).scalars().all()
         delivered = []
@@ -603,11 +648,11 @@ async def simulate_step(step_number: int, db: Session = Depends(get_db)):
             peer.pending_messages = 0
         db.commit()
         db.add(AuditLog(id=uid(), action="PEER_SYNC_RECONNECT", entity_type="peer",
-                        entity_id=None, performed_by="sync_engine", device_id="rescue-bravo",
-                        details=f"Rescue Bravo reconnected — {len(delivered)} queued messages delivered", created_at=now()))
+                        entity_id=None, performed_by="sync_engine", device_id=target_device,
+                        details=f"{target_device} reconnected — {len(delivered)} queued messages delivered", created_at=now()))
         db.commit()
-        await websocket_manager.broadcast_event("demo_step", {"step": 8, "delivered": len(delivered), "peer": "rescue-bravo", "status": "online"})
-        return {"step": 8, "status": "ok", "delivered": len(delivered), "message": "Rescue Bravo reconnected and synced"}
+        await websocket_manager.broadcast_event("demo_step", {"step": 8, "delivered": len(delivered), "peer": target_device, "status": "online"})
+        return {"step": 8, "status": "ok", "delivered": len(delivered), "message": f"{target_device} reconnected and synced"}
 
     elif step_number == 9:
         inc_id = _demo_state.get("demo_incident_id")

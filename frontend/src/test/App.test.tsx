@@ -42,21 +42,32 @@ vi.mock('../lib/api', () => ({
   resetDemo: vi.fn().mockResolvedValue({ data: {} }),
 }));
 
+// Mock WebSocket
+vi.mock('../lib/websocket', () => ({
+  wsClient: {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    on: vi.fn(() => vi.fn()),
+    send: vi.fn(),
+    isConnected: vi.fn().mockReturnValue(true),
+  },
+}));
+
 describe('ResQMesh Frontend Core Suite', () => {
   it('renders application brand and navigation elements', async () => {
     render(<App />);
-    expect(screen.getByText('ResQMesh')).toBeInTheDocument();
-    expect(screen.getByText('Command Center')).toBeInTheDocument();
-    expect(screen.getByText('Incident Management')).toBeInTheDocument();
-    expect(screen.getByText('Task Coordination')).toBeInTheDocument();
-    expect(screen.getByText('Relief Inventory')).toBeInTheDocument();
-    expect(screen.getByText('Disaster Map')).toBeInTheDocument();
-    expect(screen.getByText('Peer Network')).toBeInTheDocument();
-    expect(screen.getByText('Sync Center')).toBeInTheDocument();
+    expect(screen.getAllByText(/ResQMesh/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Command Center/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Emergencies/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Rescue Missions/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Supplies/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Disaster Map/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Rescue Network/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Sync Center/i)[0]).toBeInTheDocument();
   });
 
   it('renders tactical command center title', async () => {
     render(<App />);
-    expect(screen.getByText('DISASTER RESPONSE COMMAND CENTER')).toBeInTheDocument();
+    expect(screen.getAllByText(/ACTIVE DISASTER RESPONSE/i)[0]).toBeInTheDocument();
   });
 });

@@ -228,21 +228,47 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 ---
 
-## 8. Live Hackathon Demo Walkthrough Script (10-Step Showcase)
+## 8. Live Hackathon Demo Walkthrough Script (Top-Tier Presentation)
 
-When presenting to hackathon judges, follow this concise script:
+When presenting to hackathon judges, follow this winning demonstration flow:
 
-1. **Open the Dashboard (`http://127.0.0.1:5173`)**: Show the dark tactical UI, live UTC clock, hardware battery status, and empty KPI cards.
-2. **Initialize Demo Scenario**: Click the cyan **"⚡ Load Demo Scenario"** button in the top navbar. Point out how the KPIs instantly update (5 incidents, 6 tasks, 8,005 supply units, 3 mesh peers).
-3. **Open the 10-Step Interactive Runner**: Click **"▶ Run E2E Demo Workflow"** in the navbar to open the interactive scenario modal.
-4. **Step 1 - Field Incident Creation**: Click *Execute Step 1*. A critical flash flood report is ingested from simulated node `rescue-alpha`.
-5. **Step 2 - AI Incident Triage**: Click *Execute Step 2*. The `IncidentAgent` scores the report at urgency `0.95` due to life-threat keywords and checks the duplicate radius.
-6. **Step 3 & 4 - AI Task Suggestion with Human Sign-off**: Click *Step 3* to view the AI-generated rescue task with reasoning. Explain the safety guardrail: the task remains inactive until *Step 4* is clicked, recording the human commander's approval in the audit ledger.
-7. **Step 5 - Ration Allocation**: Click *Step 5*. The `SupplyAgent` allocates 400L of potable drinking water, reducing available stock while preserving the 20% safety reserve.
-8. **Step 6 - Network Partition Injection**: Click *Step 6*. Simulated peer `rescue-bravo` disconnects. An urgent dispatch message is queued in the store-and-forward engine.
-9. **Step 7 - Multi-Hop Store-and-Forward**: Click *Step 7*. The packet is relayed through `rescue-alpha` (hop count 1/5) with loop prevention.
-10. **Step 8 & 9 - Reconnection & Duplicate Rejection**: Click *Step 8* to reconnect `rescue-bravo`. The queue automatically empties and delivers the packet. Click *Step 9* to demonstrate how a retransmitted duplicate packet is safely dropped.
-11. **Disaster Map & Zero-Tile Radar**: Navigate to the **Disaster Map** page. Toggle the map between standard tile rendering and the **Zero-Tile Tactical Radar Grid** to prove full offline usability without internet map servers.
+1. **Open the Command Center (`http://127.0.0.1:5173`)**:
+   - Point out the **Disaster Hero Section**: `"🌊 ACTIVE DISASTER RESPONSE — Flood Emergency: Millbrook Valley"`.
+   - Show the prominent status: **"Internet Unavailable — Local Rescue Network Operating"**.
+   - Show the **"Why ResQMesh?" 3-Pillar Banner**: No Internet? (Mesh Relays), Device Disconnected? (Store-and-Forward), AI Recommends? (Human Approval Required).
+
+2. **⚡ Run the Automated 2-Minute Hackathon Demo**:
+   - Click the cyan **"⚡ 2-Min Demo"** button in the top navbar or **"RUN LIVE RESCUE SIMULATION"** in the Hero.
+   - The 17-step disaster script runs with live visual feedback (`DEMO STEP X / 17`), showing every stage from flood detection, AI urgency scoring, peer disconnection, packet queuing in SQLite, reconnection, store-and-forward relay, supply allocation, human authorization, and mission dispatch.
+   - You can **Pause**, **Resume**, or click any step directly.
+
+3. **Explore the 4-Node Interactive Mesh Topology**:
+   - On the Command Center dashboard, examine the live interactive network visualizer (`RESCUE-A`, `RESCUE-B`, `DRONE-01`, `SUPPLY-C`).
+   - Click **"⚡ Send Test P2P Packet"** to watch live animated SVG telemetry packets travel across the ad-hoc mesh.
+   - Click **"Inspect"** on any node to view real-time battery level, link quality (RSSI), queued packets, and sync state.
+
+4. **Simulate Drone Reconnaissance (Field Intelligence)**:
+   - View the **"Field Intelligence — Simulated Drone Recon Feed"** card with aerial flood imagery.
+   - Toggle between **OPTICAL** and **THERMAL HUD** modes showing water depth (1.2m), 12 people stranded, and AI hazard assessment.
+
+5. **Interact with the Offline AI Copilot**:
+   - Click **"🤖 AI Copilot"** in the top navbar or floating button in the bottom-right.
+   - Click any quick question pill:
+     - *"What is our highest priority right now?"*
+     - *"Which rescue teams are currently available?"*
+     - *"Do we have enough clean water?"*
+     - *"Are all mesh nodes connected?"*
+   - Watch the copilot deliver instant, deterministic offline situational awareness answers without any internet or cloud API calls.
+
+6. **Human-in-the-Loop Mission Authorization**:
+   - Navigate to **"🚑 Rescue Missions"** (or click review on any emergency card).
+   - Show the visual 6-stage lifecycle pipeline: `AI RECOMMENDED → WAITING APPROVAL → APPROVED → DISPATCHED → IN PROGRESS → COMPLETED`.
+   - Click **"Approve AI Recommendation"** to demonstrate that high-stakes dispatches and relief deductions require human commander sign-off before execution.
+
+7. **Verify Safety & System History**:
+   - Navigate to **"🛡️ Safety & History"**.
+   - Review the clean human-readable chronological event trail (`13:42 Incident reported` → `13:43 AI recommendation generated` → `13:44 Human approval recorded` → `13:45 Rescue mission dispatched` → `13:46 Supply allocation approved`).
+   - Expand the **"Low-Level System Log"** drawer to verify SQLite WAL audit events and SHA-256 deduplication hashes.
 
 ---
 

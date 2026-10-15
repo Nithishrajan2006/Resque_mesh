@@ -4,7 +4,16 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
   body {
+    overflow-x: hidden;
+    min-height: 100vh;
+
     @apply bg-[#050d1a] text-slate-100 font-sans antialiased;
     background-image: 
       radial-gradient(ellipse at 20% 50%, rgba(34, 211, 238, 0.03) 0%, transparent 50%),

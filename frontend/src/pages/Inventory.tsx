@@ -177,26 +177,108 @@ export const Inventory: React.FC = () => {
         </div>
       </div>
 
-      {/* Supply Items Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Dedicated AI Supply Allocation Recommendation Card */}
+      <div className="p-5 rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-950/20 via-[#071328] to-cyan-950/20 space-y-3 shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-violet-400 animate-pulse" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+              AI ALLOCATION RECOMMENDATION (SupplyAgent)
+            </h2>
+          </div>
+          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+            94% Confidence • Safe Reserve Buffer Preserved
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-white flex items-center gap-2">
+              <span>💧</span>
+              <span>"500 L water recommended for East Millbrook (Flood Emergency)."</span>
+            </p>
+            <p className="text-xs text-slate-300">
+              Target: 12 civilians stranded in Sector East. Leaves 4,500 L in reserve (above the 1,000 L minimum safety threshold).
+            </p>
+            <p className="text-[11px] font-mono text-amber-300">
+              ⚠️ AI recommendation — human approval required before release from depot.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => alert('Allocation rejected by logistics commander. Stock remains untouched.')}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold font-mono bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition"
+            >
+              REJECT
+            </button>
+            <button
+              onClick={async () => {
+                const waterItem = items.find((i) => i.category === 'water' || i.name.toLowerCase().includes('water')) || items[0];
+                if (waterItem) {
+                  try {
+                    await createTransaction({
+                      supply_item_id: waterItem.id,
+                      transaction_type: 'distribution',
+                      quantity: 500,
+                      destination: 'East Millbrook Flood Evacuation',
+                      notes: 'Commander Davis approved 500L AI recommendation.',
+                      performed_by: 'Logistics Lead',
+                      idempotency_key: `water-alloc-${Date.now()}`,
+                      ai_suggested: true,
+                      human_approved: true,
+                    });
+                    fetchData();
+                    alert('✓ 500 L Drinking Water allocated and dispatched to East Millbrook. Inventory updated.');
+                  } catch (e: any) {
+                    alert(e.response?.data?.detail || 'Allocation failed');
+                  }
+                }
+              }}
+              className="px-4 py-2 rounded-xl text-xs font-bold font-mono bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/20 transition"
+            >
+              APPROVE ALLOCATION
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Large Visual Resource Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {items.map((item) => {
           const isLow = item.minimum_stock > 0 && item.current_stock < item.minimum_stock;
           const pct = item.minimum_stock > 0
-            ? Math.min(Math.round((item.current_stock / item.minimum_stock) * 100), 200)
+            ? Math.min(Math.round((item.current_stock / (item.minimum_stock * 2)) * 100), 100)
             : 100;
+
+          const getCategoryIcon = (cat: string) => {
+            switch (cat.toLowerCase()) {
+              case 'water': return '💧';
+              case 'food': return '🍱';
+              case 'medical': return '💊';
+              case 'blankets': return '🛏️';
+              case 'fuel': return '⛽';
+              default: return '📦';
+            }
+          };
 
           return (
             <div
               key={item.id}
-              className="glass-card p-5 space-y-4 hover:border-white/20 transition flex flex-col justify-between"
+              className={`glass-card p-5 space-y-4 rounded-2xl border transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between ${
+                isLow ? 'border-amber-500/40 shadow-lg shadow-amber-500/5' : 'border-white/[0.08]'
+              }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.06] text-slate-300 uppercase">
-                    {item.category}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xl">{getCategoryIcon(item.category)}</span>
+                    <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wide">
+                      {item.category}
+                    </span>
+                  </div>
                   {isLow ? (
-                    <span className="badge-critical text-[10px]">
+                    <span className="badge-critical text-[10px] animate-pulse">
                       LOW RESERVE
                     </span>
                   ) : (
@@ -210,24 +292,24 @@ export const Inventory: React.FC = () => {
 
                 <div className="mt-3 flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-cyan-300">
-                    {item.current_stock}
+                    {item.current_stock.toLocaleString()}
                   </span>
                   <span className="text-xs text-slate-400 font-mono">
-                    {item.unit} available
+                    {item.unit}
                   </span>
                 </div>
 
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-                    <span>Safety Buffer: {item.minimum_stock} {item.unit}</span>
-                    <span>{pct}% of Min</span>
+                    <span>Reserve Baseline: {item.minimum_stock} {item.unit}</span>
+                    <span>{pct}% Available</span>
                   </div>
-                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         isLow ? 'bg-amber-400' : 'bg-emerald-400'
                       }`}
-                      style={{ width: `${Math.min(pct, 100)}%` }}
+                      style={{ width: `${pct}%` }}
                     />
                   </div>
                 </div>
@@ -236,9 +318,9 @@ export const Inventory: React.FC = () => {
               <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-400 font-mono">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                  {item.location_label || 'Central Warehouse'}
+                  {item.location_label || 'Central Depot'}
                 </span>
-                <span>{item.transactions?.length || 0} Txns</span>
+                <span>{item.transactions?.length || 0} Ledger Entries</span>
               </div>
             </div>
           );

@@ -17,12 +17,14 @@ interface NavbarProps {
   onDemoLoaded?: () => void;
   onReset?: () => void;
   onOpenWorkflowModal?: () => void;
+  onOpenCopilot?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
   onDemoLoaded, 
   onReset,
-  onOpenWorkflowModal 
+  onOpenWorkflowModal,
+  onOpenCopilot
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [wsConnected, setWsConnected] = useState<boolean>(false);
@@ -108,7 +110,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Middle Status Indicators */}
-      <div className="hidden md:flex items-center gap-4">
+      <div className="hidden lg:flex items-center gap-3">
+        {/* Offline Mode Indicator */}
+        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-cyan-300 font-bold">OFFLINE MODE: ZERO CLOUD</span>
+        </div>
+
         {/* Synthetic Data Guard */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
           <ShieldAlert className="w-3.5 h-3.5" />
@@ -145,12 +153,21 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
         <button
+          onClick={onOpenCopilot}
+          className="btn-secondary !text-xs !py-1.5 !px-3 hidden sm:inline-flex border-violet-500/40 hover:border-violet-400 text-violet-300"
+          title="Open Local AI Copilot"
+        >
+          <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+          <span>AI Copilot</span>
+        </button>
+
+        <button
           onClick={onOpenWorkflowModal}
           className="btn-secondary !text-xs !py-1.5 !px-3 hidden sm:inline-flex border-cyan-500/30 hover:border-cyan-400 text-cyan-300"
-          title="Interactive Step-by-Step E2E Workflow"
+          title="Automated 2-Minute Hackathon Demo"
         >
           <Play className="w-3.5 h-3.5 text-cyan-400" />
-          <span>E2E Workflow</span>
+          <span>⚡ 2-Min Demo</span>
         </button>
 
         <button
@@ -160,8 +177,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           title="Seed realistic Millbrook Valley disaster scenario"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loadingAction === 'load' ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Load Demo Scenario</span>
-          <span className="sm:hidden">Demo</span>
+          <span className="hidden sm:inline">Load Scenario</span>
+          <span className="sm:hidden">Reset/Load</span>
         </button>
 
         <button

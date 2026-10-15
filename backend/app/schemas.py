@@ -264,6 +264,8 @@ class PeerOut(BaseModel):
     pending_messages: int
     messages_sent: int
     messages_received: int
+    battery_level: Optional[int] = 85
+    sync_status: Optional[str] = "synced"
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -274,6 +276,8 @@ class PeerCreate(BaseModel):
     name: str
     ip_address: Optional[str] = None
     port: Optional[int] = None
+    battery_level: Optional[int] = 85
+    sync_status: Optional[str] = "synced"
     is_simulated: bool = True
     description: Optional[str] = None
 

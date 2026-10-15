@@ -14,7 +14,7 @@ import {
   Map as MapIcon,
   RefreshCw
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, ZoomControl, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getMapFeatures } from '../lib/api';
@@ -94,14 +94,16 @@ export const DisasterMap: React.FC = () => {
 
   const getMarkerIcon = (feat: MapFeature) => {
     switch (feat.feature_type) {
-      case 'shelter':
-        return createCustomIcon('#06b6d4', '⌂');
-      case 'depot':
-        return createCustomIcon('#8b5cf6', '⚑');
-      case 'blocked_road':
-        return createCustomIcon('#f97316', '✕');
+      case 'drone':
+        return createCustomIcon('#a855f7', '🚁');
       case 'team':
-        return createCustomIcon('#10b981', '▲');
+        return createCustomIcon('#0284c7', '▲');
+      case 'shelter':
+        return createCustomIcon('#10b981', '⌂');
+      case 'depot':
+        return createCustomIcon('#8b5cf6', '📦');
+      case 'blocked_road':
+        return createCustomIcon('#0f172a', '✕');
       case 'incident':
       default:
         if (feat.severity === 'critical') return createCustomIcon('#ef4444', '!');
@@ -111,7 +113,7 @@ export const DisasterMap: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-4 max-w-7xl mx-auto h-[calc(100vh-5rem)] flex flex-col">
+    <div className="p-6 space-y-4 max-w-7xl mx-auto pb-16">
       {/* Top Banner and Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
         <div>
@@ -229,7 +231,15 @@ export const DisasterMap: React.FC = () => {
       </div>
 
       {/* Main Map View Container */}
-      <div className="flex-1 rounded-2xl overflow-hidden border border-white/[0.08] relative bg-[#071120]">
+      <div className="h-[600px] min-h-[480px] rounded-2xl overflow-hidden border border-white/[0.08] relative bg-[#071120]">
+        {/* LIVE Indicator Overlay */}
+        <div className="absolute top-4 right-4 z-[400] flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#071324]/90 backdrop-blur-md border border-cyan-500/30 text-xs font-mono shadow-xl pointer-events-none">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-white font-bold">MAP STATUS: LIVE</span>
+          <span className="text-slate-500">•</span>
+          <span className="text-cyan-300">P2P MESH POSITIONING</span>
+        </div>
+
         {viewMode === 'map' ? (
           <MapContainer
             center={[centerLat, centerLon]}
@@ -253,6 +263,21 @@ export const DisasterMap: React.FC = () => {
                 fillOpacity: 0.04,
                 weight: 1,
                 dashArray: '4, 4',
+              }}
+            />
+
+            {/* Tactical Rescue Mission Dispatch Route (Animated Dash) */}
+            <Polyline
+              positions={[
+                [centerLat + 0.012, centerLon - 0.015],
+                [centerLat + 0.005, centerLon - 0.008],
+                [centerLat, centerLon],
+              ]}
+              pathOptions={{
+                color: '#10b981',
+                weight: 3.5,
+                dashArray: '8, 6',
+                opacity: 0.85,
               }}
             />
 

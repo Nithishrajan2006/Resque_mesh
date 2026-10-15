@@ -133,6 +133,8 @@ export interface Peer {
   pending_messages: number;
   messages_sent: number;
   messages_received: number;
+  battery_level?: number;
+  sync_status?: string;
   created_at: string;
 }
 
@@ -183,7 +185,7 @@ export interface AuditLog {
 
 export interface MapFeature {
   id: string;
-  feature_type: 'incident' | 'shelter' | 'depot' | 'blocked_road' | 'team';
+  feature_type: 'incident' | 'shelter' | 'depot' | 'blocked_road' | 'team' | 'drone';
   name: string;
   description?: string;
   latitude: number;

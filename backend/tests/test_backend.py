@@ -308,7 +308,7 @@ def test_full_demo_scenario_workflow(client):
     load_res = client.post("/api/demo/load")
     assert load_res.status_code == 200
     assert load_res.json()["incidents_created"] == 5
-    assert load_res.json()["peers_created"] == 3
+    assert load_res.json()["peers_created"] == 4
 
     # Step 1: Report flood
     s1 = client.post("/api/demo/simulate/step/1")

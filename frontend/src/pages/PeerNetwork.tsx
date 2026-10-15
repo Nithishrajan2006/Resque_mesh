@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Network, 
   Wifi, 
@@ -8,10 +9,16 @@ import {
   Plus, 
   Radio, 
   ShieldCheck, 
-  Server,
-  Layers,
-  ArrowRightLeft,
-  X
+  Server, 
+  Layers, 
+  ArrowRightLeft, 
+  X,
+  BatteryCharging,
+  Clock,
+  AlertTriangle,
+  CheckSquare,
+  Boxes,
+  Zap
 } from 'lucide-react';
 import { 
   listPeers, 
@@ -187,12 +194,53 @@ export const PeerNetwork: React.FC = () => {
         </div>
       </div>
 
+      {/* Emergency Node Operations Toolbar */}
+      <div className="glass-card p-4 flex flex-wrap items-center justify-between gap-3 border border-cyan-500/20 bg-gradient-to-r from-cyan-950/20 via-black/40 to-cyan-950/20">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-cyan-400" />
+          <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+            Mesh Node Operations & Task Coordination:
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          <Link
+            to="/incidents"
+            className="btn-secondary !text-xs !py-1.5 !px-3 text-red-300 border-red-500/30 hover:border-red-400 flex items-center gap-1.5"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+            <span>Report Incident</span>
+          </Link>
+          <Link
+            to="/tasks"
+            className="btn-secondary !text-xs !py-1.5 !px-3 text-amber-300 border-amber-500/30 hover:border-amber-400 flex items-center gap-1.5"
+          >
+            <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
+            <span>Assign Tasks</span>
+          </Link>
+          <Link
+            to="/inventory"
+            className="btn-secondary !text-xs !py-1.5 !px-3 text-emerald-300 border-emerald-500/30 hover:border-emerald-400 flex items-center gap-1.5"
+          >
+            <Boxes className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Modify Stock</span>
+          </Link>
+          <button
+            onClick={() => setIsMsgModalOpen(true)}
+            className="btn-primary !text-xs !py-1.5 !px-3 flex items-center gap-1.5"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Send Test Packet</span>
+          </button>
+        </div>
+      </div>
+
       {/* Simulated Network Topology Visualizer */}
       <div className="glass-card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-2">
             <Radio className="w-4 h-4 text-cyan-400" />
-            Mesh Radio Propagation & Inter-Node Links
+            Mesh Radio Propagation & Inter-Node Links (4 Active Nodes)
           </span>
           <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
             DETERMINISTIC SIMULATION
@@ -200,75 +248,116 @@ export const PeerNetwork: React.FC = () => {
         </div>
 
         {/* Visual Topology Diagram */}
-        <div className="py-8 px-4 flex flex-wrap items-center justify-around gap-8 bg-black/40 rounded-2xl border border-white/[0.05] relative overflow-hidden">
+        <div className="py-6 px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-black/40 rounded-2xl border border-white/[0.05] relative overflow-hidden">
           {peers.map((peer) => {
             const isOnline = peer.status === 'online';
             return (
               <div
                 key={peer.id}
-                className={`relative flex flex-col items-center gap-2 p-5 rounded-2xl border transition-all duration-300 ${
+                className={`relative flex flex-col justify-between gap-3 p-4 rounded-2xl border transition-all duration-300 ${
                   isOnline
                     ? 'bg-cyan-500/[0.06] border-cyan-500/40 shadow-lg shadow-cyan-500/10'
                     : 'bg-red-500/[0.04] border-red-500/30 opacity-75'
                 }`}
               >
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-md ${
-                    isOnline
-                      ? 'bg-gradient-to-tr from-cyan-500 to-teal-400 text-slate-950 ring-4 ring-cyan-500/20'
-                      : 'bg-slate-800 text-slate-400 border border-red-500/40'
-                  }`}
-                >
-                  {isOnline ? <Wifi className="w-6 h-6" /> : <WifiOff className="w-6 h-6 text-red-400" />}
-                </div>
-
-                <div className="text-center space-y-0.5">
-                  <div className="text-sm font-bold text-white">{peer.name}</div>
-                  <div className="text-[10px] font-mono text-slate-400">{peer.device_id}</div>
+                <div className="flex items-center justify-between w-full">
                   <div
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold mt-1 inline-block ${
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center text-lg font-bold shadow-md ${
+                      isOnline
+                        ? 'bg-gradient-to-tr from-cyan-500 to-teal-400 text-slate-950 ring-2 ring-cyan-500/30'
+                        : 'bg-slate-800 text-slate-400 border border-red-500/40'
+                    }`}
+                  >
+                    {isOnline ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5 text-red-400" />}
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
                       isOnline
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                         : 'bg-red-500/20 text-red-400 border border-red-500/30'
                     }`}
                   >
-                    {isOnline ? 'RADIO LINK ACTIVE' : 'DISCONNECTED'}
+                    {isOnline ? 'LINK ACTIVE' : 'DISCONNECTED'}
+                  </span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="text-sm font-bold text-white truncate">{peer.name}</div>
+                  <div className="text-[10px] font-mono text-cyan-400">{peer.device_id}</div>
+                  <p className="text-[11px] text-slate-400 line-clamp-1">{peer.description}</p>
+                </div>
+
+                {/* Battery percentage */}
+                <div className="w-full space-y-1 font-mono pt-1">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <BatteryCharging className="w-3.5 h-3.5 text-emerald-400" />
+                      Battery Level:
+                    </span>
+                    <span className="text-emerald-300 font-bold">{peer.battery_level ?? 85}%</span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        (peer.battery_level ?? 85) > 50 ? 'bg-emerald-400' : 'bg-amber-400'
+                      }`}
+                      style={{ width: `${peer.battery_level ?? 85}%` }}
+                    />
                   </div>
                 </div>
 
-                {peer.pending_messages > 0 && (
-                  <div className="text-[10px] font-mono text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
-                    {peer.pending_messages} Queued Packets
+                {/* Telemetry info */}
+                <div className="text-[10px] font-mono text-slate-400 space-y-1 pt-1 border-t border-white/[0.04]">
+                  <div className="flex items-center justify-between">
+                    <span>Sync State:</span>
+                    <span className={peer.pending_messages > 0 ? 'text-amber-300 font-bold' : 'text-cyan-300 font-bold'}>
+                      {peer.pending_messages > 0 ? `${peer.pending_messages} IN QUEUE` : 'SYNCHRONIZED'}
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between text-slate-500">
+                    <span>Tx: {peer.messages_sent} | Rx: {peer.messages_received}</span>
+                    <span>{peer.last_seen ? new Date(peer.last_seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}</span>
+                  </div>
+                </div>
 
                 {/* Node Quick Action Controls */}
-                <div className="flex items-center gap-1.5 pt-2">
+                <div className="flex items-center gap-1.5 pt-2 border-t border-white/[0.06] flex-wrap">
                   {isOnline ? (
                     <button
                       onClick={() => handleDisconnect(peer.device_id)}
-                      className="px-2 py-1 rounded text-[10px] font-mono bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 transition"
+                      className="flex-1 py-1 px-2 rounded text-[10px] font-mono bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 transition text-center"
                       title="Simulate signal dropout"
                     >
-                      Disconnect Node
+                      Disconnect
                     </button>
                   ) : (
-                    <>
-                      <button
-                        onClick={() => handleConnect(peer.device_id)}
-                        className="px-2 py-1 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 transition"
-                      >
-                        Reconnect
-                      </button>
-                      <button
-                        onClick={() => handleSync(peer.device_id)}
-                        className="px-2 py-1 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 transition"
-                        title="Deliver all pending store-and-forward messages"
-                      >
-                        Catchup Sync
-                      </button>
-                    </>
+                    <button
+                      onClick={() => handleConnect(peer.device_id)}
+                      className="flex-1 py-1 px-2 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 transition text-center"
+                    >
+                      Reconnect
+                    </button>
                   )}
+
+                  <button
+                    onClick={() => handleSync(peer.device_id)}
+                    className="py-1 px-2 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-500/30 transition text-center"
+                    title="Deliver pending store-and-forward messages"
+                  >
+                    Sync
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMsgData((prev) => ({ ...prev, destination_device_id: peer.device_id }));
+                      setIsMsgModalOpen(true);
+                    }}
+                    className="py-1 px-2 rounded text-[10px] font-mono bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 border border-violet-500/30 transition text-center"
+                    title="Send direct packet"
+                  >
+                    Message
+                  </button>
                 </div>
               </div>
             );
@@ -289,9 +378,11 @@ export const PeerNetwork: React.FC = () => {
                 <th className="p-3">Device ID</th>
                 <th className="p-3">Designation</th>
                 <th className="p-3">Link Status</th>
-                <th className="p-3">Pending Delivery</th>
+                <th className="p-3">Battery</th>
+                <th className="p-3">Sync Status</th>
+                <th className="p-3">Pending</th>
                 <th className="p-3">Packets Sent/Recv</th>
-                <th className="p-3">Last Mesh Sync</th>
+                <th className="p-3">Last Seen</th>
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -311,6 +402,14 @@ export const PeerNetwork: React.FC = () => {
                       {p.status.toUpperCase()}
                     </span>
                   </td>
+                  <td className="p-3 text-emerald-300 font-bold">
+                    {p.battery_level ?? 85}%
+                  </td>
+                  <td className="p-3">
+                    <span className={`text-[10px] font-bold ${p.pending_messages > 0 ? 'text-amber-300' : 'text-cyan-300'}`}>
+                      {p.pending_messages > 0 ? 'QUEUED' : 'SYNCHRONIZED'}
+                    </span>
+                  </td>
                   <td className="p-3">
                     {p.pending_messages > 0 ? (
                       <span className="text-amber-300 font-bold">{p.pending_messages} queued</span>
@@ -322,7 +421,7 @@ export const PeerNetwork: React.FC = () => {
                     {p.messages_sent} ↑ / {p.messages_received} ↓
                   </td>
                   <td className="p-3 text-slate-500">
-                    {p.last_sync ? new Date(p.last_sync).toLocaleTimeString() : 'Never'}
+                    {p.last_seen ? new Date(p.last_seen).toLocaleTimeString() : 'Live'}
                   </td>
                   <td className="p-3 text-right space-x-2">
                     {p.status === 'online' ? (

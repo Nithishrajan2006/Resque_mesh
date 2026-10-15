@@ -209,6 +209,8 @@ class Peer(Base):
     pending_messages = Column(Integer, default=0)
     messages_sent = Column(Integer, default=0)
     messages_received = Column(Integer, default=0)
+    battery_level = Column(Integer, default=85)
+    sync_status = Column(String(50), default="synced")
     
     created_at = Column(DateTime(timezone=True), default=utcnow)
 

@@ -44,8 +44,22 @@ export const DemoWorkflowModal: React.FC<DemoWorkflowModalProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [stepResults, setStepResults] = useState<Record<number, any>>({});
+  const [simulationLogs, setSimulationLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [stepError, setStepError] = useState<string | null>(null);
+
+  const STEP_LOGS: Record<number, string[]> = {
+    1: ['12:31:04 INCIDENT_CREATED — Flash flood reported by RESCUE-A in Riverside District'],
+    2: ['12:31:05 AI_ANALYSIS_STARTED — Local IncidentAgent keyword scanning', '12:31:06 SEVERITY_CRITICAL — Scored 0.95 priority rating'],
+    3: ['12:31:07 MESH_BROADCAST — AI proposed water rescue task (AWAITING HUMAN APPROVAL)'],
+    4: ['12:31:22 HUMAN_APPROVAL — Commander Davis authorized rescue dispatch', '12:31:24 TASK_DISPATCHED — Assigned to RESCUE-A zodiac unit'],
+    5: ['12:31:18 SUPPLY_RECOMMENDATION — 400L drinking water allocated from Central Depot (20% safety buffer preserved)'],
+    6: ['12:31:08 RESCUE-B_OFFLINE — Field unit radio partition detected', '12:31:09 MESSAGE_QUEUED — Stored in local store-and-forward SQLite bus'],
+    7: ['12:31:11 MESSAGE_HOP_FORWARDED — Relayed via intermediate peer RESCUE-A (Hop 1/5)'],
+    8: ['12:31:15 RESCUE-B_ONLINE — Radio link re-established', '12:31:16 MESSAGE_SYNCED — Queued packets delivered & acknowledged'],
+    9: ['12:31:17 DUPLICATE_SUPPRESSION — Retransmitted packet rejected via SHA-256 checksum'],
+    10: ['12:31:20 CONVERGENCE_ACHIEVED — All 4 nodes synchronized across local mesh with 100% data integrity'],
+  };
 
   if (!isOpen) return null;
 
@@ -119,6 +133,9 @@ export const DemoWorkflowModal: React.FC<DemoWorkflowModalProps> = ({
       const res = await simulateStep(stepNum);
       setStepResults((prev) => ({ ...prev, [stepNum]: res.data }));
       setCurrentStep(stepNum);
+      if (STEP_LOGS[stepNum]) {
+        setSimulationLogs((prev) => [...prev, ...STEP_LOGS[stepNum]]);
+      }
       if (stepNum === 10 && onWorkflowComplete) {
         onWorkflowComplete();
       }
@@ -137,6 +154,9 @@ export const DemoWorkflowModal: React.FC<DemoWorkflowModalProps> = ({
         const res = await simulateStep(i);
         setStepResults((prev) => ({ ...prev, [i]: res.data }));
         setCurrentStep(i);
+        if (STEP_LOGS[i]) {
+          setSimulationLogs((prev) => [...prev, ...STEP_LOGS[i]]);
+        }
         // Small delay so audience sees progression
         await new Promise((r) => setTimeout(r, 650));
       } catch (err: any) {
@@ -176,6 +196,46 @@ export const DemoWorkflowModal: React.FC<DemoWorkflowModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Node Live State Strip During Simulation */}
+        <div className="px-6 py-2.5 bg-black/40 border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 text-[10px] uppercase font-bold">Mesh Peer States:</span>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                RESCUE-A: ONLINE
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all duration-300 ${
+                  currentStep >= 6 && currentStep < 8
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}
+              >
+                {currentStep >= 6 && currentStep < 8 ? 'RESCUE-B: OFFLINE (QUEUE ACTIVE)' : 'RESCUE-B: ONLINE'}
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                DRONE-01: ONLINE
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                SUPPLY-C: ONLINE
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-[10px]">
+            <span className="text-slate-400">Simulation Progress:</span>
+            <span className="text-cyan-400 font-bold">{Math.round((currentStep / 10) * 100)}%</span>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full bg-slate-900 h-1 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 h-full transition-all duration-300"
+            style={{ width: `${(currentStep / 10) * 100}%` }}
+          />
         </div>
 
         {/* Content Body: Split Left (Steps) and Right (Live Log Output) */}
@@ -254,6 +314,37 @@ export const DemoWorkflowModal: React.FC<DemoWorkflowModalProps> = ({
                 </div>
               )}
 
+              {/* Live Mesh Event Sequence Stream */}
+              {simulationLogs.length > 0 && (
+                <div className="p-3 rounded-lg bg-black/60 border border-cyan-500/30 space-y-1.5 shadow-inner">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.08] text-[10px] text-cyan-400">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                      SIMULATED EVENT LOG
+                    </span>
+                    <span className="text-slate-500">{simulationLogs.length} events emitted</span>
+                  </div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto font-mono text-[10px]">
+                    {simulationLogs.map((log, idx) => (
+                      <div key={idx} className="flex items-start gap-1.5 text-slate-300">
+                        <span className="text-cyan-400 select-none">›</span>
+                        <span className={
+                          log.includes('CRITICAL') || log.includes('OFFLINE')
+                            ? 'text-red-400 font-bold'
+                            : log.includes('AI_') || log.includes('SUPPLY_')
+                            ? 'text-violet-300 font-semibold'
+                            : log.includes('ONLINE') || log.includes('SYNCED') || log.includes('APPROVAL') || log.includes('CONVERGENCE')
+                            ? 'text-emerald-400 font-bold'
+                            : 'text-slate-300'
+                        }>
+                          {log}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {Object.entries(stepResults).map(([stepKey, res]) => (
                 <div key={stepKey} className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] space-y-1">
                   <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
@@ -284,6 +375,7 @@ export const DemoWorkflowModal: React.FC<DemoWorkflowModalProps> = ({
             onClick={() => {
               setCurrentStep(0);
               setStepResults({});
+              setSimulationLogs([]);
               setStepError(null);
             }}
             className="btn-secondary !text-xs"

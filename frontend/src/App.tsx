@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Bot } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { DemoWorkflowModal } from './components/DemoWorkflowModal';
+import { TwoMinuteDemoModal } from './components/TwoMinuteDemoModal';
+import { AICopilotModal } from './components/AICopilotModal';
 import { CommandCenter } from './pages/CommandCenter';
 import { Incidents } from './pages/Incidents';
 import { Tasks } from './pages/Tasks';
@@ -18,6 +21,8 @@ import { DashboardStats } from './types';
 export function App() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState<boolean>(false);
+  const [isTwoMinuteDemoOpen, setIsTwoMinuteDemoOpen] = useState<boolean>(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState<boolean>(false);
 
   const fetchStats = async () => {
     try {
@@ -57,19 +62,23 @@ export function App() {
         <Navbar
           onDemoLoaded={fetchStats}
           onReset={fetchStats}
-          onOpenWorkflowModal={() => setIsWorkflowModalOpen(true)}
+          onOpenWorkflowModal={() => setIsTwoMinuteDemoOpen(true)}
+          onOpenCopilot={() => setIsCopilotOpen(true)}
         />
 
-        <div className="flex-1 flex overflow-hidden">
-          <Sidebar stats={stats} />
+        <div className="flex-1 flex min-w-0">
+          <Sidebar 
+            stats={stats} 
+            onOpenCopilot={() => setIsCopilotOpen(true)}
+          />
 
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 min-w-0 pb-16">
             <Routes>
               <Route
                 path="/"
                 element={
                   <CommandCenter
-                    onOpenWorkflow={() => setIsWorkflowModalOpen(true)}
+                    onOpenWorkflow={() => setIsTwoMinuteDemoOpen(true)}
                   />
                 }
               />
@@ -85,10 +94,35 @@ export function App() {
           </main>
         </div>
 
+        {/* Floating AI Copilot Trigger */}
+        <button
+          onClick={() => setIsCopilotOpen(true)}
+          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-xs shadow-2xl shadow-violet-500/30 transition transform hover:scale-105 group border border-white/20"
+          title="Open ResQMesh Local AI Copilot"
+        >
+          <Bot className="w-4 h-4 text-cyan-200 group-hover:rotate-12 transition" />
+          <span className="font-mono">AI Copilot</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        </button>
+
+        {/* 2-Minute Automated Demo Runner */}
+        <TwoMinuteDemoModal
+          isOpen={isTwoMinuteDemoOpen}
+          onClose={() => setIsTwoMinuteDemoOpen(false)}
+          onComplete={fetchStats}
+        />
+
+        {/* Step-by-Step E2E Workflow Modal */}
         <DemoWorkflowModal
           isOpen={isWorkflowModalOpen}
           onClose={() => setIsWorkflowModalOpen(false)}
           onWorkflowComplete={fetchStats}
+        />
+
+        {/* AI Copilot Interactive Modal */}
+        <AICopilotModal
+          isOpen={isCopilotOpen}
+          onClose={() => setIsCopilotOpen(false)}
         />
       </div>
     </Router>

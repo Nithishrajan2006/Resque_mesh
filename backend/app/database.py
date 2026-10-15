@@ -35,7 +35,18 @@ def get_db():
 
 
 def init_db():
-    """Initialize database tables"""
+    """Initialize database tables and run safe column migrations"""
     from app import models  # noqa - ensures models are registered
     Base.metadata.create_all(bind=engine)
+    with engine.connect() as conn:
+        try:
+            cursor = conn.exec_driver_sql("PRAGMA table_info(peers)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "battery_level" not in columns:
+                conn.exec_driver_sql("ALTER TABLE peers ADD COLUMN battery_level INTEGER DEFAULT 100")
+            if "sync_status" not in columns:
+                conn.exec_driver_sql("ALTER TABLE peers ADD COLUMN sync_status VARCHAR(50) DEFAULT 'synced'")
+            conn.commit()
+        except Exception as e:
+            logger.warning(f"Column migration check note: {e}")
     logger.info("Database tables created/verified successfully")
