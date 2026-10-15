@@ -4,11 +4,15 @@
  */
 import axios from 'axios';
 
-const API_ORIGIN = (import.meta.env.VITE_API_URL || '').trim();
-const BASE_URL = API_ORIGIN ? `${API_ORIGIN.replace(/\/$/, '')}/api` : '/api';
+const getApiBaseUrl = (): string => {
+  const origin = (import.meta.env.VITE_API_URL || '').trim();
+  if (!origin) return '/api';
+  const clean = origin.replace(/\/$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+};
 
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: getApiBaseUrl(),
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
