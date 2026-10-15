@@ -4,11 +4,21 @@
  */
 import axios from 'axios';
 
+export const DEFAULT_PROD_BACKEND = 'https://resqmesh-backend-uhnu.onrender.com';
+
 const getApiBaseUrl = (): string => {
   const origin = (import.meta.env.VITE_API_URL || '').trim();
-  if (!origin) return '/api';
-  const clean = origin.replace(/\/$/, '');
-  return clean.endsWith('/api') ? clean : `${clean}/api`;
+  if (origin) {
+    const clean = origin.replace(/\/$/, '');
+    return clean.endsWith('/api') ? clean : `${clean}/api`;
+  }
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocal) {
+      return `${DEFAULT_PROD_BACKEND}/api`;
+    }
+  }
+  return '/api';
 };
 
 export const api = axios.create({

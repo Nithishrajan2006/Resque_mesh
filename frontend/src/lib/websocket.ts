@@ -1,5 +1,7 @@
 type EventCallback = (data: any) => void;
 
+const DEFAULT_PROD_WS = 'wss://resqmesh-backend-uhnu.onrender.com';
+
 class ResQMeshWebSocket {
   private ws: WebSocket | null = null;
   private listeners: Map<string, Set<EventCallback>> = new Map();
@@ -14,8 +16,8 @@ class ResQMeshWebSocket {
 
   /**
    * Resolves the WebSocket endpoint URL.
-   * Ensures that the client does NOT attempt to connect to static hosts (like Vercel)
-   * where no WebSocket server is running, which prevents 'Unexpected response code: 200' errors.
+   * Connects to configured VITE_WS_URL, VITE_API_URL, local proxy, or the live Render backend.
+   * Protects against connecting directly to Vercel domains which reject WebSocket handshakes with 200 OK.
    */
   public getTargetUrl(): string | null {
     const envWsUrl = (import.meta.env.VITE_WS_URL || '').trim();
@@ -27,8 +29,8 @@ class ResQMeshWebSocket {
         const testHttp = envWsUrl.startsWith('ws') ? envWsUrl.replace(/^ws/, 'http') : envWsUrl;
         const parsed = new URL(testHttp);
         if (parsed.hostname.endsWith('.vercel.app') || parsed.hostname === 'vercel.app') {
-          console.warn('⚠️ VITE_WS_URL points to a Vercel domain. Vercel cannot host WebSocket servers. Set VITE_WS_URL to your backend (e.g. Render/Railway).');
-          return null;
+          console.warn('⚠️ VITE_WS_URL points to a Vercel domain. Falling back to live Render backend.');
+          return `${DEFAULT_PROD_WS}/ws/${this.clientId}`;
         }
       } catch {
         // Continue if URL parsing fails
@@ -41,8 +43,7 @@ class ResQMeshWebSocket {
       try {
         const parsed = new URL(envApiUrl);
         if (parsed.hostname.endsWith('.vercel.app') || parsed.hostname === 'vercel.app') {
-          console.warn('⚠️ VITE_API_URL points to a Vercel domain. Vercel cannot host WebSocket servers. Set VITE_WS_URL to your backend (e.g. Render/Railway).');
-          return null;
+          return `${DEFAULT_PROD_WS}/ws/${this.clientId}`;
         }
         const wsProto = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
         const cleanHost = parsed.host;
@@ -66,14 +67,9 @@ class ResQMeshWebSocket {
         return `${protocol}//${host}/ws/${this.clientId}`;
       }
 
-      // Static cloud hosting (Vercel, GitHub Pages, Netlify) without backend URL
-      if (hostname.endsWith('.vercel.app') || hostname === 'vercel.app') {
-        // Do NOT connect to Vercel — Vercel returns HTTP 200 (index.html) and breaks the handshake
-        return null;
-      }
-
-      // Other remote host without configured backend
-      return null;
+      // Static cloud hosting (Vercel, GitHub Pages) without explicit env var
+      // Connect directly to verified live Render backend!
+      return `${DEFAULT_PROD_WS}/ws/${this.clientId}`;
     }
 
     return null;
